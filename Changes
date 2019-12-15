@@ -1,3 +1,9 @@
 {{$NEXT}}
 
+- BUGFIX: Fix accidental line deletion (oops)
+- BUGFIX: Use the correct prebuilt public lambda layer in me-south-1
+- FEATURE: Add support for extra layers
+
+1.0000   2019-12-14
+
 - Initial release

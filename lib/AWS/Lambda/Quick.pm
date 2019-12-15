@@ -9,6 +9,7 @@ our $VERSION = '1.0000';
 use AWS::Lambda::Quick::Processor ();
 
 sub import {
+    shift;
 
     # where's the source code of the script calling us?
     my ( undef, $file, undef ) = caller;
@@ -338,6 +339,26 @@ our live URL will be of the form:
     https://????.execute-api.????.amazonaws.com/quick/????
 
 By setting stage_name to another value you can change this.
+
+=item extra_layers
+
+An arrayref of extra layers (in addition to the standard prebuilt public
+Lambda layer for Perl) that will be used by this Lambda function.
+
+Currently AWS Lamda supports up to four extra layers (five in total
+including the prebuilt public layer for Perl.)  All layers, when
+decompressed, must be less that 250MB in size.
+
+You may either identify a layer by its ARN, or by using a identifying
+name that is known to this module.  At this time the only known
+identifying name is C<paws> which indicates that the Lambda function
+should use the prebuilt Paws layer in the same region as the Lambda
+function.
+
+    use AWS::Lambda::Quick (
+        name => 'email sender',
+        extra_layers => [ 'paws' ],
+    );
 
 =back
 

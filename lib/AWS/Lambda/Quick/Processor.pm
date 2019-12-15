@@ -13,6 +13,7 @@ has src_filename => required => 1;
 
 has 'description';
 has 'extra_files';
+has 'extra_layers';
 has 'memory_size';
 has 'region';
 has 'stage_name';
@@ -52,6 +53,7 @@ sub process {
         $self->selfkv(
             qw(
                 description
+                extra_layers
                 memory_size
                 name
                 region

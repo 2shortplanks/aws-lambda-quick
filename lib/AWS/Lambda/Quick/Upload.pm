@@ -13,9 +13,10 @@ has name         => required => 1;
 
 ### optional attributes wrt the lambda function itself
 
-has region      => default => 'us-east-1';
-has memory_size => default => 128;           # this is the AWS default
-has timeout     => default => 3;             # this is the AWS default
+has extra_layers => default => [];
+has region       => default => 'us-east-1';
+has memory_size  => default => 128;           # this is the AWS default
+has timeout      => default => 3;             # this is the AWS default
 has description => default => 'A Perl AWS::Lambda::Quick Lambda function.';
 has stage_name  => default => 'quick';
 
@@ -398,6 +399,34 @@ sub _upload_function {
     my $update_type = $self->update_type;
     my $region      = $self->region;
 
+    # compute the arn based on the list in the AWS::Lambda 0.0.11
+    # documentation
+    my $v      = $region eq 'me-south-1' ? 3 : 5;
+    my $layers = [
+        "arn:aws:lambda:$region:445285296882:layer:perl-5-30-runtime:$v",
+    ];
+
+    for my $layer ( @{ $self->extra_layers } ) {
+        if ( $layer
+            =~ /(arn:[a-zA-Z0-9-]+:lambda:[a-zA-Z0-9-]+:\d{12}:layer:[a-zA-Z0-9-_]+)/aa
+        ) {
+            push @{$layers}, $layer;
+            next;
+        }
+
+        if ( $layer eq 'paws' ) {
+
+            # compute the arn based on the list in the AWS::Lambda 0.0.11
+            # documentation
+            my $pv = $region eq 'me-south-1' ? 3 : 4;
+            push @{$layers},
+                "arn:aws:lambda:$region:445285296882:layer:perl-5-30-paws:$pv";
+            next;
+        }
+
+        die "Layer '$layer' is neither a known named layer nor a layer arn";
+    }
+
     if ( $update_type eq 'create-function' ) {
         $self->debug('creating new function');
         my $result = $self->aws_do(
@@ -410,10 +439,9 @@ sub _upload_function {
                 'runtime'       => 'provided',
                 'zip-file'      => $self->zip_file_blob,
                 'handler'       => 'handler.handler',
-                'layers' =>
-                    "arn:aws:lambda:$region:445285296882:layer:perl-5-30-runtime:5",
-                'timeout'     => $self->timeout,
-                'memory-size' => $self->memory_size,
+                'layers'        => $layers,
+                'timeout'       => $self->timeout,
+                'memory-size'   => $self->memory_size,
             }
         );
         $self->debug('new function created');
@@ -440,10 +468,9 @@ sub _upload_function {
             'region'        => $region,
             'runtime'       => 'provided',
             'handler'       => 'handler.handler',
-            'layers' =>
-                "arn:aws:lambda:$region:445285296882:layer:perl-5-30-runtime:5",
-            'timeout'     => $self->timeout,
-            'memory-size' => $self->memory_size,
+            'layers'        => $layers,
+            'timeout'       => $self->timeout,
+            'memory-size'   => $self->memory_size,
         }
     );
     $self->debug('function congifuration updated');

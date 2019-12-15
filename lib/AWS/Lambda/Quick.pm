@@ -9,7 +9,6 @@ our $VERSION = '1.0000';
 use AWS::Lambda::Quick::Processor ();
 
 sub import {
-    my $class = shift;
 
     # where's the source code of the script calling us?
     my ( undef, $file, undef ) = caller;

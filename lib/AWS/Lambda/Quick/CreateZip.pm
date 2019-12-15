@@ -1,6 +1,8 @@
 package AWS::Lambda::Quick::CreateZip;
 use Mo qw( default required );
 
+our $VERSION = '1.0000';
+
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 use Path::Tiny qw( path );
 
@@ -9,11 +11,11 @@ has zip_filename => required => 1;
 
 has extra_files => default => [];
 
-has _src_path   => sub { path( shift->src_filename ) };
-has _src_dir    => sub { shift->_src_path->parent };
+has _src_path => sub { path( shift->src_filename ) };
+has _src_dir  => sub { shift->_src_path->parent };
 has _zip_class  => default => 'Archive::Zip';
 has _zip        => sub { shift->_zip_class->new };
-has _script_src => sub { shift->_src_path->slurp_raw }; 
+has _script_src => sub { shift->_src_path->slurp_raw };
 
 # this is the same src as in script src but the first occurance of
 # "use AWS::Lambda::Quick" is prepended with
@@ -22,9 +24,9 @@ has _script_src => sub { shift->_src_path->slurp_raw };
 # with line numebrs that could mess with error messages
 has _converted_src => sub {
     my $self = shift;
-    my $src = $self->_script_src;
-    $src =~ s<(?=use AWS::Lambda::Quick(?:\s|[;(]))>
-             <BEGIN{\$INC{'AWS/Lambda/Quick.pm'}=1} >;
+    my $src  = $self->_script_src;
+    $src =~ s{(?=use AWS::Lambda::Quick(?:\s|[;(]))}
+             {BEGIN{\$INC{'AWS/Lambda/Quick.pm'}=1} };
     return $src;
 };
 
@@ -37,17 +39,17 @@ sub _add_string {
     my $string   = shift;
     my $filename = shift;
 
-    my $zip = $self->_zip;
+    my $zip           = $self->_zip;
     my $string_member = $zip->addString( $string, $filename );
-    $string_member->desiredCompressionMethod( COMPRESSION_DEFLATED );
+    $string_member->desiredCompressionMethod(COMPRESSION_DEFLATED);
     return ();
 }
 
 sub _add_path {
     my $self = shift;
     my $path = path(shift);
-    
-    if ($path->is_absolute) {
+
+    if ( $path->is_absolute ) {
         die "Cannot add absolute path! $path";
     }
     my $abs_path = path( $self->_src_dir, $path );
@@ -57,11 +59,13 @@ sub _add_path {
     # worry if that file exists or not
     return unless -e $abs_path;
 
-    $self->_zip->addFileOrDirectory({
-        name => $abs_path->stringify,
-        zipName => $path->stringify,
-        compressionLevel => COMPRESSION_DEFLATED,
-    });
+    $self->_zip->addFileOrDirectory(
+        {
+            name             => $abs_path->stringify,
+            zipName          => $path->stringify,
+            compressionLevel => COMPRESSION_DEFLATED,
+        }
+    );
 
     # was that a directory?  Add the contents recursively
     return () unless -d $abs_path;
@@ -76,7 +80,8 @@ sub _add_path {
 
 sub _write_zip {
     my $self = shift;
-    unless ( $self->_zip->writeToFileNamed( $self->zip_filename->stringify ) == AZ_OK ) {
+    unless ( $self->_zip->writeToFileNamed( $self->zip_filename->stringify )
+        == AZ_OK ) {
         die 'write error';
     }
     return ();
@@ -87,7 +92,7 @@ sub _write_zip {
 sub _build_zip {
     my $self = shift;
     $self->_add_string( $self->_converted_src, 'handler.pl' );
-    $self->_add_path( $_ ) for @{ $self->extra_files };
+    $self->_add_path($_) for @{ $self->extra_files };
     return ();
 }
 
@@ -111,17 +116,17 @@ AWS::Lambda::Quick::CreateZip - lambda function zipping for AWS::Lambda::Quick
 No user servicable parts.  See L<AWS::Lambda::Quick> for usage.
 
 =head1 AUTHOR
- 
+
 Written by Mark Fowler B<mark@twoshortplanks.com>
- 
+
 Copyright Mark Fowler 2019.
- 
+
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
- 
+
 =head1 SEE ALSO
- 
+
 L<AWS::Lambda::Quick>
- 
+
 =cut
 

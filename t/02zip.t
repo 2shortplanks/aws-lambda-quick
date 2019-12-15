@@ -5,7 +5,7 @@ use warnings;
 
 use FindBin;
 use Path::Tiny qw(path);
-use lib path($FindBin::Bin,'lib')->stringify;
+use lib path( $FindBin::Bin, 'lib' )->stringify;
 
 use Test2::V0;
 
@@ -14,22 +14,22 @@ use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 use AWS::Lambda::Quick::CreateZip ();
 use TestHelper::CreateTestFiles qw(populated_tempdir);
 
-my $tempdir = populated_tempdir();
-my $zip_filename = path($tempdir, 'handler.zip');
+my $tempdir      = populated_tempdir();
+my $zip_filename = path( $tempdir, 'handler.zip' );
 
 AWS::Lambda::Quick::CreateZip->new(
-    src_filename => path($tempdir, 'src','handler.pl'),
+    src_filename => path( $tempdir, 'src', 'handler.pl' ),
     zip_filename => $zip_filename,
 
-    extra_files  => ['lib'],
+    extra_files => ['lib'],
 )->create_zip;
 
-ok(-e $zip_filename, 'zip exists');
+ok( -e $zip_filename, 'zip exists' );
 
 my $z = Archive::Zip->new();
-ok ( $z->read( $zip_filename->stringify ) == AZ_OK, 'read zip okay');
+ok( $z->read( $zip_filename->stringify ) == AZ_OK, 'read zip okay' );
 
-is($z->contents('handler.pl'), <<'PERL', 'hander.pl was stored ok');
+is( $z->contents('handler.pl'), <<'PERL', 'hander.pl was stored ok' );
 BEGIN{$INC{'AWS/Lambda/Quick.pm'}=1} use AWS::Lambda::Quick (
     name => 'whatever',
     extra_files => 'lib',
@@ -53,7 +53,7 @@ sub handler {
 1;
 PERL
 
-is($z->contents('lib/Greeting.pm'), <<'PERL', 'Greeting.pm was stored ok');
+is( $z->contents('lib/Greeting.pm'), <<'PERL', 'Greeting.pm was stored ok' );
 package Greeting;
 sub greeting {
     my $class = shift;
@@ -63,6 +63,5 @@ sub greeting {
 }
 1;
 PERL
-
 
 done_testing;

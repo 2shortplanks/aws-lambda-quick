@@ -1,5 +1,8 @@
 package TestHelper::CreateTestFiles;
 
+use strict;
+use warnings;
+
 use Test::TempDir::Tiny qw( tempdir );
 use Path::Tiny qw( path );
 
@@ -7,17 +10,18 @@ use base qw(Exporter);
 our @EXPORT_OK = qw( populated_tempdir );
 
 sub populated_tempdir {
+
     # make a clean temp dir
-    my $tempdir = path(tempdir());
+    my $tempdir = path( tempdir() );
     $tempdir->remove_tree if -e $tempdir;
     $tempdir->mkpath;
 
     # create the temp files
-    my $dir = path($tempdir, 'src');
+    my $dir = path( $tempdir, 'src' );
     $dir->mkpath;
 
     # the main source file
-    path($dir,'handler.pl')->spew(<<'PERL');
+    path( $dir, 'handler.pl' )->spew(<<'PERL');
 use AWS::Lambda::Quick (
     name => 'whatever',
     extra_files => 'lib',
@@ -42,8 +46,8 @@ sub handler {
 PERL
 
     # an example library
-    path($dir,'lib')->mkpath;
-    path($dir,'lib','Greeting.pm')->spew(<<'PERL');
+    path( $dir, 'lib' )->mkpath;
+    path( $dir, 'lib', 'Greeting.pm' )->spew(<<'PERL');
 package Greeting;
 sub greeting {
     my $class = shift;

@@ -295,6 +295,26 @@ console and AWS API to make any further tweaks you may desire.
 
     By setting stage\_name to another value you can change this.
 
+- extra\_layers
+
+    An arrayref of extra layers (in addition to the standard prebuilt public
+    Lambda layer for Perl) that will be used by this Lambda function.
+
+    Currently AWS Lamda supports up to four extra layers (five in total
+    including the prebuilt public layer for Perl.)  All layers, when
+    decompressed, must be less that 250MB in size.
+
+    You may either identify a layer by its ARN, or by using a identifying
+    name that is known to this module.  At this time the only known
+    identifying name is `paws` which indicates that the Lambda function
+    should use the prebuilt Paws layer in the same region as the Lambda
+    function.
+
+        use AWS::Lambda::Quick (
+            name => 'email sender',
+            extra_layers => [ 'paws' ],
+        );
+
 ## Installing the CLI tools
 
 This module requires you to have the version 1 AWS CLI tools installed

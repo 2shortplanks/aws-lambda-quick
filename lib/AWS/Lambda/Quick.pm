@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use autodie;
 
-our $VERSION = '1.0000';
+our $VERSION = '1.0002';
 
 use AWS::Lambda::Quick::Processor ();
 

@@ -1,7 +1,7 @@
 package AWS::Lambda::Quick::Processor;
 use Mo qw( default required );
 
-our $VERSION = '1.0000';
+our $VERSION = '1.0002';
 
 use AWS::Lambda::Quick::CreateZip ();
 use AWS::Lambda::Quick::Upload    ();

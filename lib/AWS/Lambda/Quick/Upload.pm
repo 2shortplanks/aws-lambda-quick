@@ -1,7 +1,7 @@
 package AWS::Lambda::Quick::Upload;
 use Mo qw( default required );
 
-our $VERSION = '1.0000';
+our $VERSION = '1.0002';
 
 use AWS::CLIWrapper;
 use JSON::PP ();
@@ -206,16 +206,54 @@ has resource_id => sub {
     return $result->{id};
 };
 
+has greedy_resource_id => sub {
+    my $self = shift;
+
+    my $path = '/' . $self->name . '/{proxy+}';
+
+    # search existing resources
+    $self->debug('searching of existing greedy resource');
+    my $result = $self->aws_do(
+        'apigateway',
+        'get-resources',
+        {
+            'rest-api-id' => $self->rest_api_id,
+        }
+    );
+    for ( @{ $result->{items} } ) {
+        next unless $_->{path} eq $path;
+        $self->debug('found exiting resource');
+        return $_->{id};
+    }
+
+    # couldn't find it.  Create a new one
+    $self->debug('creating new greedy resource');
+    $result = $self->aws_do(
+        'apigateway',
+        'create-resource',
+        {
+            'rest-api-id' => $self->rest_api_id,
+            'parent-id'   => $self->resource_id,
+            'path-part'   => '{proxy+}',
+        },
+    );
+    $self->debug('created new greedy resource');
+    return $result->{id};
+};
+
 ### methods
 
 sub upload {
     my $self = shift;
 
     my $function_arn = $self->_upload_function;
-    $self->_create_method;
-    $self->_create_method_response;
-    $self->_create_integration($function_arn);
-    $self->_create_integration_response;
+
+    for my $resource_id ( $self->resource_id, $self->greedy_resource_id ) {
+        $self->_create_method($resource_id);
+        $self->_create_method_response($resource_id);
+        $self->_create_integration( $function_arn, $resource_id );
+        $self->_create_integration_response($resource_id);
+    }
     $self->_stage;
 
     return ();
@@ -248,11 +286,12 @@ sub _stage {
 }
 
 sub _create_method {
-    my $self = shift;
+    my $self        = shift;
+    my $resource_id = shift;
 
     my @identifiers = (
         'rest-api-id' => $self->rest_api_id,
-        'resource-id' => $self->resource_id,
+        'resource-id' => $resource_id,
         'http-method' => 'ANY',
     );
 
@@ -283,11 +322,12 @@ sub _create_method {
 }
 
 sub _create_method_response {
-    my $self = shift;
+    my $self        = shift;
+    my $resource_id = shift;
 
     my $identifiers = {
         'rest-api-id' => $self->rest_api_id,
-        'resource-id' => $self->resource_id,
+        'resource-id' => $resource_id,
         'http-method' => 'ANY',
         'status-code' => 200,
     };
@@ -317,10 +357,11 @@ sub _create_method_response {
 sub _create_integration {
     my $self         = shift;
     my $function_arn = shift;
+    my $resource_id  = shift;
 
     my $identifiers = {
         'rest-api-id' => $self->rest_api_id,
-        'resource-id' => $self->resource_id,
+        'resource-id' => $resource_id,
         'http-method' => 'ANY',
     };
 
@@ -359,11 +400,12 @@ sub _create_integration {
 }
 
 sub _create_integration_response {
-    my $self = shift;
+    my $self        = shift;
+    my $resource_id = shift;
 
     my $identifiers = {
         'rest-api-id' => $self->rest_api_id,
-        'resource-id' => $self->resource_id,
+        'resource-id' => $resource_id,
         'http-method' => 'ANY',
         'status-code' => 200,
     };

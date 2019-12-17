@@ -1,7 +1,7 @@
 package AWS::Lambda::Quick::CreateZip;
 use Mo qw( default required );
 
-our $VERSION = '1.0000';
+our $VERSION = '1.0002';
 
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 use Path::Tiny qw( path );
